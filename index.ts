@@ -14,13 +14,17 @@ import User from "./models/user";
 const app = express();
 const port = 4000;
 const dburl = process.env.MONGO_URL || ""
+const corsOption = {
+  origin: ['http://localhost:3000', 'https://audet.vercel.app'],
+};
+
 
 app.use(bodyParser());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.raw());
 app.use(bodyParser.text());
-app.use(cors());
+app.use(cors(corsOption));
 app.use('/comment', commentRouter)
 
 
@@ -91,7 +95,7 @@ async function connectToMongo(dburl: string) {
       const user = await User.findOne({ email });
   
       if (!user || !bcrypt.compareSync(password, user.password)) {
-        return res.json({ success: false, message: 'Invalid username or password' });
+        return res.json({ success: false, message: 'Invalid email or password' });
       }
   
       const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '4d' });
