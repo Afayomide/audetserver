@@ -1,0 +1,5 @@
+# Example .gitignore for Node.js projects
+node_modules/
+.env
+*.log
+.DS_Store
