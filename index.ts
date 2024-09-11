@@ -2,12 +2,14 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 require('dotenv').config();
+const jwt = require('jsonwebtoken');
 const mongoose = require("mongoose")
+const bcrypt = require('bcrypt')
 const commentRouter = require("./routes/comment")
 import MusicBlog  from "./models/musicBlog";
 import Album from "./models/album";
 import Comment from "./models/comment";
-
+import User from "./models/user";
 
 const app = express();
 const port = 4000;
@@ -55,6 +57,84 @@ async function connectToMongo(dburl: string) {
   .catch((error) => {
     console.error('Fatal error:', error.message);
   });
+
+
+  function verifyToken(req:any, res:any, next:any) {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+  
+    const token = authHeader.split(' ')[1];
+  
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      req.user = decoded; 
+      const now = Date.now() / 1000; 
+      if (decoded.exp < now) {
+        console.warn('JWT has expired!');
+        return res.status(401).json({ message: 'Your session has expired. Please log in again.' });
+      }
+      else{
+      }
+      next();
+    } catch (error) {
+      return res.status(403).json({ message: 'Invalid token' });
+    }
+  }
+
+  app.post('/login', async (req:any, res:any) => {
+    const { email, password } = req.body;
+  
+    try {
+      const user = await User.findOne({ email });
+  
+      if (!user || !bcrypt.compareSync(password, user.password)) {
+        return res.json({ success: false, message: 'Invalid username or password' });
+      }
+  
+      const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '4d' });
+      res.json({ success: true, token, user });
+      console.log(user._id)
+    } catch (error:any) {
+      console.error('Error:', error.message);
+      res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+  });
+
+  app.post('/signup', async (req: any, res: any) => {
+    const { fullname, username, email, password } = req.body;
+  
+    if (!username || !password || !fullname || !email) {
+      return res.json({ success: false, message: 'All fields are required' }); // Use return to prevent further execution
+    }
+  
+    try {
+      const existingUser = await User.findOne({ username });
+  
+      if (existingUser) {
+        return res.json({ success: false, message: 'Username already exists' }); // Use return to prevent further execution
+      }
+  
+      const saltRounds = 10;
+      const hashedPassword = bcrypt.hashSync(password, saltRounds);
+      
+      const newUser = new User({
+        fullname,
+        username,
+        email,
+        password: hashedPassword,
+      });
+  
+      await newUser.save();
+      return res.json({ success: true });
+    } catch (error: any) {
+      console.error('Error:', error.message);
+      return res.json({ success: false, message: 'Internal server error' });
+    }
+  });
+
 
 
   app.get("/latestMusicBlogs", async (req: any, res: any) => {
