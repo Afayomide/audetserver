@@ -1,17 +1,27 @@
 const express = require('express');
 const router = express.Router();
+const jwt = require('jsonwebtoken')
 import Comment from "../models/comment";
+import User from "../models/user";
 import MusicBlog from "../models/musicBlog";
 require('dotenv').config();
+import { verifyToken } from "../verifyToken";
+const cookieParser = require('cookie-parser')
+
+router.use(cookieParser());  
+router.use(express.json());
 
 
-
-
-
-
-router.post('/:musicBlogId', async (req:any, res:any) => {
+router.post('/:musicBlogId', verifyToken, async (req:any, res:any) => {
+  const id = req.user.userId
+  console.log(id)
     try {
-      var { text, userName } = req.body;
+      const user = await User.findById(id).select('-password');
+      if(!user){
+        res.json({message: "user not found"})
+      }
+
+      var { text } = req.body;
       var musicBlogId = req.params.musicBlogId;
   
       // Verify review exists
@@ -21,7 +31,7 @@ router.post('/:musicBlogId', async (req:any, res:any) => {
       // Create and save the comment
       var comment = new Comment({
         text,
-        userName,
+        userName : user?.username,
         musicBlogId
       });
       await comment.save();
@@ -32,6 +42,7 @@ router.post('/:musicBlogId', async (req:any, res:any) => {
 console.log(error)
       return res.status(500).json({ message: error });
     }
+ 
   });
 
   router.get('/:musicBlogId', async (req:any, res:any) => {

@@ -6,16 +6,21 @@ const jwt = require('jsonwebtoken');
 const mongoose = require("mongoose")
 const bcrypt = require('bcrypt')
 const commentRouter = require("./routes/comment")
+const resetPasswordRouter = require("./routes/reset-password")
 import MusicBlog  from "./models/musicBlog";
 import Album from "./models/album";
 import Comment from "./models/comment";
 import User from "./models/user";
+const cookieParser = require('cookie-parser');
+import { verifyToken } from "./verifyToken";
+
 
 const app = express();
 const port = 4000;
 const dburl = process.env.MONGO_URL || ""
 const corsOption = {
   origin: ['http://localhost:3000', 'https://audet.vercel.app'],
+  credentials: true
 };
 
 
@@ -26,7 +31,9 @@ app.use(bodyParser.raw());
 app.use(bodyParser.text());
 app.use(cors(corsOption));
 app.use('/comment', commentRouter)
-
+app.use('/',resetPasswordRouter)
+app.use(cookieParser());
+app.use(express.json());
 
 async function connectToMongo(dburl: string) {
     const retryAttempts = 3;
@@ -63,33 +70,24 @@ async function connectToMongo(dburl: string) {
   });
 
 
-  function verifyToken(req:any, res:any, next:any) {
-    const authHeader = req.headers.authorization;
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ message: 'Unauthorized' });
-    }
-  
-    const token = authHeader.split(' ')[1];
-  
+
+  app.get('/checkAuth', verifyToken, async (req:any, res:any) => {
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      req.user = decoded; 
-      const now = Date.now() / 1000; 
-      if (decoded.exp < now) {
-        console.warn('JWT has expired!');
-        return res.status(401).json({ message: 'Your session has expired. Please log in again.' });
+      const user = await User.findById(req.user.userId).select('-password'); // Exclude password field
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
       }
-      else{
-      }
-      next();
+      res.json({ user });
     } catch (error) {
-      return res.status(403).json({ message: 'Invalid token' });
+      res.status(500).json({ message: 'Internal server error' });
+      res.json({error})
     }
-  }
+  });
 
   app.post('/login', async (req:any, res:any) => {
     const { email, password } = req.body;
+    console.log(req.body)
   
     try {
       const user = await User.findOne({ email });
@@ -99,7 +97,15 @@ async function connectToMongo(dburl: string) {
       }
   
       const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '4d' });
-      res.json({ success: true, token, user });
+      // res.json({ success: true, token, user });
+      res.cookie('token', token, {
+        httpOnly: true,   
+        secure: false,  
+        // sameSite: 'Strict',  
+        maxAge: 24 * 60 * 60 * 1000 
+      });
+      res.json({success: true, user});
+
       console.log(user._id)
     } catch (error:any) {
       console.error('Error:', error.message);
@@ -137,6 +143,18 @@ async function connectToMongo(dburl: string) {
       console.error('Error:', error.message);
       return res.json({ success: false, message: 'Internal server error' });
     }
+  });
+
+  app.post('/logout', (req: any, res: any) => {
+    // Clear the token cookie by setting its expiration date to the past
+    res.cookie('token', '', {
+      httpOnly: true,
+      // secure: process.env.NODE_ENV === 'production', // Set to true in production for HTTPS
+      sameSite: 'Strict',
+      maxAge: 0 // Immediately expire the cookie
+    });
+  
+    return res.status(200).json({ success: true, message: 'Logged out successfully' });
   });
 
 
