@@ -99,8 +99,8 @@ async function connectToMongo(dburl: string) {
       // res.json({ success: true, token, user });
       res.cookie('token', token, {
         httpOnly: true,   
-        // secure: false,  
-        // sameSite: 'Strict',  
+        secure: process.env.NODE_ENV === 'production',  
+        sameSite: 'None',  
         maxAge: 24 * 60 * 60 * 1000 
       });
       res.json({success: true, user});
