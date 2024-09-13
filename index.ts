@@ -145,12 +145,11 @@ async function connectToMongo(dburl: string) {
   });
 
   app.post('/logout', (req: any, res: any) => {
-    // Clear the token cookie by setting its expiration date to the past
     res.cookie('token', '', {
       httpOnly: true,
-      // secure: process.env.NODE_ENV === 'production', // Set to true in production for HTTPS
-      sameSite: 'Strict',
-      maxAge: 0 // Immediately expire the cookie
+      secure: process.env.NODE_ENV === 'production', // Set to true in production for HTTPS
+      sameSite: 'None',
+      maxAge: 0 
     });
   
     return res.status(200).json({ success: true, message: 'Logged out successfully' });
@@ -184,11 +183,11 @@ async function connectToMongo(dburl: string) {
   });
 
   app.put("/upload", async (req:any, res:any)=>{
-    const {title, artist,type,blogTitle , cover,duration,featuredArtists, album, genre, releaseDate, plays, description, latest, trending, musicFilePath} = req.body
+    const {title, artist,type,blogTitle , cover,duration,featuredArtists, album, genre, releaseDate, plays, description, highlights, latest, trending, musicFilePath} = req.body
     console.log(req.body)
 
       // Validate required fields
-  if (!title || !artist || !cover || !blogTitle || !type ||!duration || !genre || !description || !musicFilePath) {
+  if (!title || !artist || !cover || !blogTitle || !type  || !genre || !description ) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
@@ -205,6 +204,7 @@ async function connectToMongo(dburl: string) {
         album, 
         genre,
         releaseDate,
+        highlights,
         description,
         musicFilePath, 
       });
@@ -226,6 +226,7 @@ async function connectToMongo(dburl: string) {
       releaseDate: releaseDate || Date.now(),
       plays: plays || 0, 
       description,
+      highlights,
       latest: latest !== undefined ? latest : true, 
       trending: trending || false, 
       musicFilePath, 
@@ -297,11 +298,12 @@ async function connectToMongo(dburl: string) {
     try {
       // Update all existing MusicBlogs to have type: 'MusicBlog' if it doesn't exist
       await MusicBlog.updateMany(
-        { blogTitle: { $exists: false } }, // Find all documents where 'type' does not exist
-        { $set: { blogTitle: "Check Out Rema's New MusicBlog" } }    // Set 'type' to 'MusicBlog'
+        { highlights: { $exists: false } }, // Find all documents where 'type' does not exist
+        { $set: { highlights: ["Rema's", "March Am"] } }    // Set 'type' to 'MusicBlog'
       );
+      const blogs = await MusicBlog.find()
+      res.json({blogs})
       
-      console.log('All existing MusicBlogs updated with type: blogTitle');
     } catch (error) {
       console.error('Error updating MusicBlogs:', error);
     } finally {

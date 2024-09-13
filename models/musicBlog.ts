@@ -13,7 +13,8 @@ export interface musicBlog {
   genre: string;
   releaseDate: string;
   plays: number;
-  description: string[];
+  description: string[];  
+  highlights: string[];
   latest: boolean;
   trending: boolean;
   musicFilePath: string;
@@ -26,7 +27,7 @@ const musicBlogSchema = new mongoose.Schema<musicBlog>({
   blogTitle: {type: String, required: true},
   featuredArtists: {type:String, required: false},
   cover: {type: String, required: true},
-  duration: { type: String, required: true }, // In seconds
+  duration: { type: String, required: false }, // In seconds
   // album: { type: mongoose.Schema.Types.ObjectId, ref: 'Album' }, // Reference to Album
   album: { type: String, ref: 'Album' },
   genre: { type: String, required: true },
@@ -34,9 +35,10 @@ const musicBlogSchema = new mongoose.Schema<musicBlog>({
   releaseDate: { type: String },
   plays: { type: Number, default: 0 },
   description: {type: [String], required: true} ,
+  highlights: {type: [String], required: false} ,
   latest:{type: Boolean, default: true},
-  trending: {type: Boolean, default: false},
-  musicFilePath: { type: String, required: true }, // Store the path or URL to the music file
+  trending: {type: Boolean, default: true},
+  musicFilePath: { type: String, required: false }, // Store the path or URL to the music file
 
 }, {
   timestamps: true,
