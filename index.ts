@@ -9,7 +9,6 @@ const commentRouter = require("./routes/comment")
 const resetPasswordRouter = require("./routes/reset-password")
 import MusicBlog  from "./models/musicBlog";
 import Album from "./models/album";
-import Comment from "./models/comment";
 import User from "./models/user";
 const cookieParser = require('cookie-parser');
 import { verifyToken } from "./verifyToken";
@@ -20,19 +19,19 @@ const port = 4000;
 const dburl = process.env.MONGO_URL || ""
 const corsOption = {
   origin: ['http://localhost:3000', 'https://audet.vercel.app'],
-  credentials: true
+  credentials: true,
 };
 
-
+app.use(cors(corsOption));
+app.use(cookieParser());
 app.use(bodyParser());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.raw());
 app.use(bodyParser.text());
-app.use(cors(corsOption));
 app.use('/comment', commentRouter)
 app.use('/',resetPasswordRouter)
-app.use(cookieParser());
+
 app.use(express.json());
 
 async function connectToMongo(dburl: string) {
