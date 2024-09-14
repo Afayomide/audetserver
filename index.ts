@@ -159,7 +159,9 @@ async function connectToMongo(dburl: string) {
 
   app.get("/latestMusicBlogs", async (req: any, res: any) => {
     try {
-      const latestMusicBlog = await MusicBlog.find({ latest: true }).limit(10);
+      const latestMusicBlog = await MusicBlog.find({ latest: true })
+      .sort({ createdAt: -1 }) 
+      .limit(10);
       if (!latestMusicBlog) {
         return res.status(404).json({ error: 'Progress not found' });
       }
