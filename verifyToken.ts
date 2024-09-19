@@ -9,7 +9,6 @@ app.use(cookieParser());
 app.use(express.json());
 
 export function verifyToken(req: any, res: any, next: any) {
-    console.log('Cookies:', req.cookies);  
 
   const token = req.cookies.token;
 

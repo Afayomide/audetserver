@@ -7,13 +7,16 @@ import User from '../models/user'; // Update with your User model path
 
 const router = express.Router();
 
-// Setup Nodemailer transport (configure with your email service provider)
 const transporter = nodemailer.createTransport({
-  service: 'Gmail', // Use your email service
+  service: 'Gmail', 
   auth: {
-    user: process.env.EMAIL_USER, // Your email address
-    pass: process.env.EMAIL_PASS, // Your email password
+    user: process.env.EMAIL_USER, 
+    pass: process.env.EMAIL_PASS, 
   },
+  tls: {
+    rejectUnauthorized: false 
+  }
+
 });
 
 router.post('/forgot-password', async (req: any, res: any) => {
@@ -50,7 +53,7 @@ router.post('/forgot-password', async (req: any, res: any) => {
 
     res.status(200).json({ message: 'Password reset link sent to your email address.' });
   } catch (error) {
-    console.error(error);
+    console.error("this is", error);
     res.status(500).json({ message: 'Server error' });
   }
 });

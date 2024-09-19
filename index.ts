@@ -86,7 +86,6 @@ async function connectToMongo(dburl: string) {
 
   app.post('/login', async (req:any, res:any) => {
     const { email, password } = req.body;
-    console.log(req.body)
   
     try {
       const user = await User.findOne({ email });
@@ -100,12 +99,11 @@ async function connectToMongo(dburl: string) {
       res.cookie('token', token, {
         httpOnly: true,   
         secure: process.env.NODE_ENV === 'production',  
-        sameSite: 'None',  
-        maxAge: 24 * 60 * 60 * 1000 
+        sameSite: process.env.SAME_SITE,  
+        maxAge: 4 * 24 * 60 * 60 * 1000 
       });
       res.json({success: true, user});
 
-      console.log(user._id)
     } catch (error:any) {
       console.error('Error:', error.message);
       res.status(500).json({ success: false, message: 'Internal server error' });
@@ -148,7 +146,7 @@ async function connectToMongo(dburl: string) {
     res.cookie('token', '', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production', // Set to true in production for HTTPS
-      sameSite: 'None',
+      sameSite: process.env.SAME_SITE,
       maxAge: 0 
     });
   
@@ -186,7 +184,6 @@ async function connectToMongo(dburl: string) {
 
   app.put("/upload", async (req:any, res:any)=>{
     const {title, artist,type,blogTitle , cover,duration,featuredArtists, album, genre, releaseDate, plays, description, highlights, latest, trending, musicFilePath} = req.body
-    console.log(req.body)
 
       // Validate required fields
   if (!title || !artist || !cover || !blogTitle || !type  || !genre || !description ) {
@@ -246,14 +243,12 @@ async function connectToMongo(dburl: string) {
 
   app.get('/search', async (req: any, res: any) => {
     const { searchTerm } = req.query;
-    console.log(req.query, req.params)
   
     if (typeof searchTerm !== 'string' || searchTerm.trim() === '') {
       return res.status(400).json({ error: 'Invalid search term' });
     }
   
     try {
-      console.log(`this is ${searchTerm}`);
       const searchOptions = {
         $or: [
           { title: { $regex: searchTerm, $options: 'i' } },
@@ -285,7 +280,6 @@ async function connectToMongo(dburl: string) {
     const {id} = req.body;
     try{
       const musicblog = await MusicBlog.findById(id)
-      console.log(musicblog)
       if(musicblog) {
         return res.status(200).json({musicblog})
       }

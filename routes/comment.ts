@@ -14,7 +14,6 @@ router.use(express.json());
 
 router.post('/:musicBlogId', verifyToken, async (req:any, res:any) => {
   const id = req.user.userId
-  console.log(id)
     try {
       const user = await User.findById(id).select('-password');
       if(!user){
@@ -39,7 +38,6 @@ router.post('/:musicBlogId', verifyToken, async (req:any, res:any) => {
       return res.status(201).json(comment);
     } catch (error) {      
       console.error(error)
-console.log(error)
       return res.status(500).json({ message: error });
     }
  
@@ -51,7 +49,6 @@ console.log(error)
   
       // Get comments for the specific review
       var comments = await Comment.find({ musicBlogId })//.populate('MusicBlog');
-        console.log(comments)
       return res.status(200).json(comments);
     } catch (error) {
       console.error(error)
