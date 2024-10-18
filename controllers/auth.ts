@@ -5,6 +5,13 @@ import pool from "../db";
 import crypto from "crypto";
 import { Request, Response } from "express";
 
+const sameSiteValue: "lax" | "strict" | "none" | undefined = 
+    process.env.SAME_SITE === "lax" || 
+    process.env.SAME_SITE === "strict" || 
+    process.env.SAME_SITE === "none" 
+    ? process.env.SAME_SITE 
+    : undefined; 
+
 const transporter = nodemailer.createTransport({
   service: "Gmail",
   auth: {
@@ -49,7 +56,7 @@ export const login = async (req: Request, res: Response) => {
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      //   sameSite: process.env.SAME_SITE,
+        sameSite: sameSiteValue,
       maxAge: 4 * 24 * 60 * 60 * 1000,
     });
     const { password: _, ...userWithoutPassword } = user;
@@ -98,7 +105,7 @@ export const logOut = (req: Request, res: Response) => {
   res.cookie("token", "", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production", // Set to true in production for HTTPS
-    // sameSite: process.env.SAME_SITE,
+    sameSite: sameSiteValue,
     maxAge: 0,
   });
 
@@ -123,14 +130,12 @@ export const forgotPassword = async (req: Request, res: Response) => {
         .json({ message: "No account found with that email address." });
     }
 
-    // Generate reset token
     const resetToken = crypto.randomBytes(20).toString("hex");
     user.resetPasswordToken = resetToken;
     user.resetPasswordExpires = new Date(Date.now() + 3600000); // Token expires in 1 hour
 
     await user.save();
 
-    // Send reset email
     const resetURL = `${process.env.CLIENT_URL}/reset-password?token=${resetToken}`;
     const mailOptions = {
       to: email,
