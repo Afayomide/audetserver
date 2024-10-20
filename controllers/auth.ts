@@ -5,12 +5,12 @@ import pool from "../db";
 import crypto from "crypto";
 import { Request, Response } from "express";
 
-const sameSiteValue: "lax" | "strict" | "none" | undefined = 
-    process.env.SAME_SITE === "lax" || 
-    process.env.SAME_SITE === "strict" || 
-    process.env.SAME_SITE === "none" 
-    ? process.env.SAME_SITE 
-    : undefined; 
+const sameSiteValue: "lax" | "strict" | "none" | undefined =
+  process.env.SAME_SITE === "lax" ||
+  process.env.SAME_SITE === "strict" ||
+  process.env.SAME_SITE === "none"
+    ? process.env.SAME_SITE
+    : undefined;
 
 const transporter = nodemailer.createTransport({
   service: "Gmail",
@@ -56,7 +56,7 @@ export const login = async (req: Request, res: Response) => {
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-        sameSite: sameSiteValue,
+      // sameSite: sameSiteValue,
       maxAge: 4 * 24 * 60 * 60 * 1000,
     });
     const { password: _, ...userWithoutPassword } = user;
@@ -105,7 +105,7 @@ export const logOut = (req: Request, res: Response) => {
   res.cookie("token", "", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production", // Set to true in production for HTTPS
-    sameSite: sameSiteValue,
+    // sameSite: sameSiteValue,
     maxAge: 0,
   });
 
@@ -118,9 +118,10 @@ export const forgotPassword = async (req: Request, res: Response) => {
   const { email } = req.body;
 
   try {
-    const userResult = await pool.query("SELCT * FROM users WHERE email = $1", [
-      email,
-    ]);
+    const userResult = await pool.query(
+      "SELECT * FROM users WHERE email = $1",
+      [email]
+    );
 
     const user = userResult.rows[0];
 
@@ -131,10 +132,12 @@ export const forgotPassword = async (req: Request, res: Response) => {
     }
 
     const resetToken = crypto.randomBytes(20).toString("hex");
-    user.resetPasswordToken = resetToken;
-    user.resetPasswordExpires = new Date(Date.now() + 3600000); // Token expires in 1 hour
+    const resetPasswordExpires = new Date(Date.now() + 3600000); // Token expires in 1 hour
 
-    await user.save();
+    await pool.query(
+      "UPDATE users SET reset_password_token = $1, reset_password_expires = $2 WHERE id = $3",
+      [resetToken, resetPasswordExpires, user.id]
+    );
 
     const resetURL = `${process.env.CLIENT_URL}/reset-password?token=${resetToken}`;
     const mailOptions = {
@@ -187,8 +190,10 @@ export const ResetPassword = async (req: Request, res: Response) => {
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
 
-    await user.save();
-
+    await pool.query(
+      "UPDATE users SET password = $1, reset_password_token = NULL, reset_password_expires = NULL WHERE id = $2",
+      [hashedPassword, user.id]
+    );
     res
       .status(200)
       .json({ message: "Password has been successfully updated." });
