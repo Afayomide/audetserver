@@ -1,5 +1,4 @@
 import { Request, Response } from "express";
-import Album from "../models/album";
 import pool from "../db";
 
 export const search = async (req: Request, res: Response) => {
@@ -132,18 +131,6 @@ export const upload = async (req: Request, res: Response) => {
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Failed to upload the MusicBlog" });
-  }
-};
-
-export const latestAlbum = async (req: Request, res: Response) => {
-  try {
-    const latestAlbum = await Album.find({ latest: true }).limit(10);
-    if (!latestAlbum) {
-      return res.status(404).json({ error: "Progress not found" });
-    }
-    return res.status(200).json(latestAlbum);
-  } catch (error) {
-    return res.status(500).json({ error: "Failed to fetch the latest music." });
   }
 };
 

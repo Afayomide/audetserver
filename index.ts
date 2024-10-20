@@ -6,13 +6,7 @@ const commentRouter = require("./routes/comment");
 const authRouter = require("./routes/auth");
 const cookieParser = require("cookie-parser");
 import pool from "./db";
-import {
-  aboutBlog,
-  latestAlbum,
-  latestMusicBlogs,
-  search,
-  upload,
-} from "./controllers";
+import { aboutBlog, latestMusicBlogs, search, upload } from "./controllers";
 
 const app = express();
 const port = 4000;
@@ -64,8 +58,6 @@ connectToPostgres()
   });
 
 app.route("/latestMusicBlogs").get(latestMusicBlogs);
-
-app.route("/latestalbum").get(latestAlbum);
 
 app.route("/upload").put(upload);
 
