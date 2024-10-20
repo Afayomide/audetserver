@@ -56,7 +56,7 @@ export const login = async (req: Request, res: Response) => {
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      // sameSite: sameSiteValue,
+      sameSite: sameSiteValue,
       maxAge: 4 * 24 * 60 * 60 * 1000,
     });
     const { password: _, ...userWithoutPassword } = user;
@@ -105,7 +105,7 @@ export const logOut = (req: Request, res: Response) => {
   res.cookie("token", "", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production", // Set to true in production for HTTPS
-    // sameSite: sameSiteValue,
+    sameSite: sameSiteValue,
     maxAge: 0,
   });
 
