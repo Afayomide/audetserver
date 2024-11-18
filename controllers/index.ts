@@ -137,7 +137,7 @@ export const upload = async (req: Request, res: Response) => {
 export const latestMusicBlogs = async (req: Request, res: Response) => {
   try {
     const result = await pool.query(
-      "SELECT * FROM music_blogs WHERE latest = true ORDER BY created_at DESC LIMIT 10"
+      "SELECT * FROM music_blogs WHERE latest = true"
     );
     const latestMusicBlog = result.rows;
     if (!latestMusicBlog) {
